@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 31663a87e3215ff4385338db6026e7c0
+timeCreated: 1502182451
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - _nnaoShader: {fileID: 4800000, guid: dca704606e73803408f467e9934b9f96, type: 3}
+  - _f0Texture: {fileID: 2800000, guid: dedb831303a8378488be356755821c02, type: 3}
+  - _f1Texture: {fileID: 2800000, guid: e414df9c84e2b5f4bbbd75fe5451ecb7, type: 3}
+  - _f2Texture: {fileID: 2800000, guid: d6a68d3f3034a27409baaab3cb4b0b85, type: 3}
+  - _f3Texture: {fileID: 2800000, guid: 18c248aac4dc9c54bbbe5e77bd667541, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

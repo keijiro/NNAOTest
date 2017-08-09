@@ -1,0 +1,10 @@
+*.swp
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+/Library/
+/Temp/
+
+/*.unitypackage
