@@ -1,7 +1,7 @@
 NNAO Test
 =========
 
-![screenshot](http://imgur.com/ptp7TAol.png)
+![screenshot](http://imgur.com/MKr042tl.png)
 
 This is a straightforward port of Neural Network Ambient Occlusion (NNAO)
 originally written by Daniel Holden et al.
