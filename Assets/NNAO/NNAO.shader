@@ -15,7 +15,15 @@
         {
             CGPROGRAM
             #pragma vertex vert_img
-            #pragma fragment frag
+            #pragma fragment frag_ao
+            #include "NNAO.cginc"
+            ENDCG
+        }
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert_img
+            #pragma fragment frag_composite
             #include "NNAO.cginc"
             ENDCG
         }

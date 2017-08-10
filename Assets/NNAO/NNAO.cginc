@@ -3,12 +3,14 @@
 sampler2D _CameraDepthTexture;
 sampler2D _CameraDepthNormalsTexture;
 
+sampler2D _MainTex;
 sampler2D _F0Tex;
 sampler2D _F1Tex;
 sampler2D _F2Tex;
 sampler2D _F3Tex;
 
 float _Radius;
+uint _FrameCount;
 
 static const float4 F0a = float4( 2.364370,  2.399485,  0.889055,  4.055205);
 static const float4 F0b = float4(-1.296360, -0.926747, -0.441784, -3.308158);
@@ -99,24 +101,20 @@ float4 prelu(float4 x, float4 alpha, float4 beta)
     return beta * max(x, 0) + alpha * min(x, 0);
 }
 
-float2 spiral(float t, float l, float o)
+float2 spiral(float t1, float t2, float l, float o)
 {
-    float x = l * 2 * UNITY_PI * (t + o);
-    return t * float2(cos(x), sin(x));
+    float x = l * 2 * UNITY_PI * (t1 + o);
+    return t2 * float2(cos(x), sin(x));
 }
 
-half4 frag(v2f_img i) : SV_Target
+half AO(float4 midl, float3 base, float seed, float seed2)
 {
     // Sample count
-    const int NSAMPLES = 16;
+    const int NSAMPLES = 10;
 
     // Full/half filter width
     const int FW = 31;
     const int HW = (FW - 1) / 2;
-
-    float4 midl = SampleDepthNormal(i.uv);
-    float3 base = ReconstructViewPosition(i.uv, midl.w);
-    float3 seed = rand(base);
 
     // First Layer
     float4 H0 = 0;
@@ -124,9 +122,11 @@ half4 frag(v2f_img i) : SV_Target
     // New Faster Sampler Method
     for (int i = 0; i < NSAMPLES; i++)
     {
-        float t = (float)(i + 1) / (NSAMPLES + 1);
-        float scale = UNITY_PI * FW * FW * t / (NSAMPLES * 2); 
-        float2 indx = spiral(t, 2.5, UNITY_PI * 2 * seed.x);
+        float t1 = (float)(i +     1) / (NSAMPLES + 1);
+        float t2 = (float)(i + seed2) / (NSAMPLES + 1);
+
+        float scale = UNITY_PI * FW * FW * t2 / (NSAMPLES * 2);
+        float2 indx = spiral(t1, t2, 1.8, seed);
 
         float4 next = float4(base.xy + indx * _Radius, base.z, 1);
         next = mul(unity_CameraProjection, next);
@@ -159,7 +159,33 @@ half4 frag(v2f_img i) : SV_Target
     float4 H2 = prelu(mul(transpose(W2), H1) + b2, alpha2, beta2);
     float  Y  = prelu(dot(W3, H2) + b3, alpha3, beta3);
 
-    // Output
-    float ao = 1 - saturate(Y * Ystd + Ymean);
-    return float4(GammaToLinearSpace(ao), 1);
+    return Y * Ystd + Ymean;
+}
+
+half4 frag_ao(v2f_img i) : SV_Target
+{
+    uint2 sc = i.uv * _ScreenParams;
+
+    float4 midl = SampleDepthNormal(i.uv);
+    float3 base = ReconstructViewPosition(i.uv, midl.w);
+    float3 seed = rand(base);
+
+    static const float rotations[6] = { 60, 300, 180, 240, 120, 0 };
+    static const float offsets[4] = { 0, 0.5, 0.25, 0.75 };
+
+    float offs = _Time.y;
+    float ao = AO(midl, base,
+        frac((1.0 / 16.0) * ((((sc.x + sc.y) & 3) << 2) + (sc.x & 3)) +
+            rotations[_FrameCount % 6] / 360),
+        frac((1.0 / 4.0) * ((sc.y - sc.x) & 3) + offsets[(_FrameCount / 6) % 4])
+    );
+
+    float hist = tex2D(_MainTex, i.uv).r;
+    return lerp(hist, saturate(ao), 0.02);
+}
+
+half4 frag_composite(v2f_img i) : SV_Target
+{
+    float ao = tex2D(_MainTex, i.uv).r;
+    return half4(GammaToLinearSpace(saturate(1 - ao)), 1);
 }
